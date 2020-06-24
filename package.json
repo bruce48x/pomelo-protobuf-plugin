@@ -1,6 +1,6 @@
 {
     "name": "pinus-protobuf-plugin",
-    "version": "1.0.2",
+    "version": "2.0.0",
     "private": false,
     "author": "py8765 pengyang633@126.com/@py8765",
     "main": "./dist/index.js",
@@ -9,15 +9,25 @@
         "protobuf"
     ],
     "license": "BSD",
+    "scripts": {
+        "build": "yarn format && yarn lint && tsc",
+        "format": "prettier --write \"**/*.ts\"",
+        "lint": "eslint \"**/*.ts\" --fix"
+    },
     "dependencies": {
         "mqtt-connection": "^4.0.0",
         "pinus": "^1.4.0",
         "pinus-logger": "^1.4.0",
-        "protobufjs": "6.9.0"
+        "protobufjs": "^6.9.0"
     },
     "devDependencies": {
         "@types/jest": "^25.2.1",
+        "@types/mqtt-connection": "git+https://github.com/node-pinus/types-mqtt-connection.git",
         "@types/node": "^10.0.0",
-        "@types/mqtt-connection": "git+https://github.com/node-pinus/types-mqtt-connection.git"
+        "@typescript-eslint/eslint-plugin": "^3.4.0",
+        "@typescript-eslint/parser": "^3.4.0",
+        "eslint": "^7.3.1",
+        "prettier": "^2.0.5",
+        "typescript": "^3.9.5"
     }
 }

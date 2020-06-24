@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProtobufComponent = void 0;
 const fs = require("fs");
 const path = require("path");
 const Logger = require("pinus-logger");
 const logger = Logger.getLogger('ragdoll', __filename);
 const protobufjs_1 = require("protobufjs");
-const parser4client_1 = require("./parser4client");
-const parser4protobufjs_1 = require("./parser4protobufjs");
 const SERVER = 'server';
 const CLIENT = 'client';
 class ProtobufComponent {
@@ -16,8 +15,10 @@ class ProtobufComponent {
         this.version = 0;
         this.watchers = {};
         opts = opts || {};
-        this.serverProtosPath = opts.serverProtos || '/config/serverProtos.json';
-        this.clientProtosPath = opts.clientProtos || '/config/clientProtos.json';
+        this.serverProtosPath =
+            opts.serverProtos || '/config/serverProtos.json';
+        this.clientProtosPath =
+            opts.clientProtos || '/config/clientProtos.json';
     }
     start(cb) {
         this.setProtos(SERVER, path.join(this.app.getBase(), this.serverProtosPath));
@@ -26,8 +27,11 @@ class ProtobufComponent {
         this.clientProtoRoot = protobufjs_1.Root.fromJSON(this.clientProtos);
         process.nextTick(cb);
     }
+    normalizeRoute(route) {
+        return route.split('.').join('');
+    }
     check(type, route) {
-        route = parser4protobufjs_1.Parser4protobufjs.normalizeRoute(route);
+        route = this.normalizeRoute(route);
         switch (type) {
             case SERVER:
                 if (!this.serverProtoRoot) {
@@ -42,12 +46,15 @@ class ProtobufComponent {
                 return this.clientProtoRoot.lookup(route);
                 break;
             default:
-                throw new Error('decodeIO meet with error type of protos, type: ' + type + ' route: ' + route);
+                throw new Error('decodeIO meet with error type of protos, type: ' +
+                    type +
+                    ' route: ' +
+                    route);
                 break;
         }
     }
     encode(route, message) {
-        route = parser4protobufjs_1.Parser4protobufjs.normalizeRoute(route);
+        route = this.normalizeRoute(route);
         const ProtoMessage = this.serverProtoRoot.lookupType(route);
         if (!ProtoMessage) {
             throw Error('not such route ' + route);
@@ -60,7 +67,7 @@ class ProtobufComponent {
         return ProtoMessage.encode(msg).finish();
     }
     decode(route, message) {
-        route = parser4protobufjs_1.Parser4protobufjs.normalizeRoute(route);
+        route = this.normalizeRoute(route);
         const ProtoMessage = this.clientProtoRoot.lookupType(route);
         if (!ProtoMessage) {
             throw Error('not such route ' + route);
@@ -70,9 +77,9 @@ class ProtobufComponent {
     }
     getProtos() {
         return {
-            server: parser4client_1.Parser4client.parse(this.serverProtosJson),
-            client: parser4client_1.Parser4client.parse(this.clientProtosJson),
-            version: this.version
+            server: this.serverProtos,
+            client: this.clientProtos,
+            version: this.version,
         };
     }
     getVersion() {
@@ -83,18 +90,16 @@ class ProtobufComponent {
             return;
         }
         if (type === SERVER) {
-            this.serverProtosJson = require(path);
-            this.serverProtos = parser4protobufjs_1.Parser4protobufjs.parse(this.serverProtosJson);
+            this.serverProtos = require(path);
         }
         if (type === CLIENT) {
-            this.clientProtosJson = require(path);
-            this.clientProtos = parser4protobufjs_1.Parser4protobufjs.parse(this.clientProtosJson);
+            this.clientProtos = require(path);
         }
-        var time = fs.statSync(path).mtime.getTime();
+        const time = fs.statSync(path).mtime.getTime();
         if (this.version < time) {
             this.version = time;
         }
-        var watcher = fs.watch(path, this.onUpdate.bind(this, type, path));
+        const watcher = fs.watch(path, this.onUpdate.bind(this, type, path));
         if (this.watchers[type]) {
             this.watchers[type].close();
         }
@@ -107,12 +112,10 @@ class ProtobufComponent {
         fs.readFile(path, 'utf8', function (err, data) {
             try {
                 if (type === SERVER) {
-                    this.serverProtosJson = JSON.parse(data);
-                    this.serverProtos = parser4protobufjs_1.Parser4protobufjs.parse(this.serverProtosJson);
+                    this.serverProtos = JSON.parse(data);
                 }
                 else {
-                    this.clientProtosJson = JSON.parse(data);
-                    this.clientProtos = parser4protobufjs_1.Parser4protobufjs.parse(this.clientProtosJson);
+                    this.clientProtos = JSON.parse(data);
                 }
                 this.version = fs.statSync(path).mtime.getTime();
             }
@@ -122,7 +125,7 @@ class ProtobufComponent {
         });
     }
     stop(force, cb) {
-        for (var type in this.watchers) {
+        for (const type in this.watchers) {
             this.watchers[type].close();
         }
         this.watchers = {};
